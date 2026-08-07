@@ -416,4 +416,530 @@
     font-size: 16px;
     font-weight: 700;
     color: var(--rose-deep);
-    margin-bott
+    margin-bottom: 4px;
+  }
+  .detail-sub {
+    font-size: 11.5px;
+    color: var(--ink-muted);
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed rgba(156,136,128,0.3);
+  }
+
+  .slot-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .slot-btn {
+    border: 1px solid var(--gold);
+    background: #FFFDF9;
+    color: var(--rose-deep);
+    border-radius: 10px;
+    padding: 11px 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: background .15s ease, transform .12s ease;
+  }
+  .slot-btn:hover { background: var(--gold-soft); transform: translateY(-1px); }
+  .slot-btn:active { transform: scale(0.97); }
+
+  .slot-btn.taken {
+    background: var(--closed);
+    border-color: transparent;
+    color: var(--closed-text);
+    text-decoration: line-through;
+    cursor: default;
+  }
+  .slot-btn.taken:hover { transform: none; background: var(--closed); }
+
+  .empty-msg {
+    text-align: center;
+    color: var(--ink-muted);
+    font-size: 12.5px;
+    padding: 18px 0;
+  }
+
+  .cta-note {
+    margin-top: 16px;
+    font-size: 11px;
+    color: var(--ink-muted);
+    text-align: center;
+    line-height: 1.6;
+  }
+  .cta-note b { color: var(--line-green); }
+
+  /* ---- Footer ---- */
+  footer {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 10.5px;
+    color: var(--ink-muted);
+    padding: 0 24px;
+    line-height: 1.7;
+  }
+
+  .status-msg {
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-muted);
+    padding: 30px 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">ONLINE RESERVATION</div>
+    <h1>ともこ皮フクリニック</h1>
+    <div class="sub">医療 × 美容アートメイク｜空き枠カレンダー</div>
+
+    <div class="hours-card">
+      <div class="hours-title">診療時間</div>
+      <div id="hoursTable"></div>
+      <div class="hours-note">
+        休診：木曜日・日曜日・第1土曜日・祝日<br>
+        ※完全予約制です。ご希望の枠をタップし、LINEからお申し込みください。
+      </div>
+    </div>
+  </header>
+
+  <section class="menu-section" id="menuSection">
+    <div class="menu-lead">ご希望の施術メニューをお選びください</div>
+    <div id="menuList"></div>
+  </section>
+
+  <section class="cal-section hidden" id="calSection">
+    <div class="change-menu" id="changeMenuBtn">‹ メニューを変更する</div>
+    <div class="selected-menu-chip" id="selectedMenuChip"></div>
+    <div class="cal-nav">
+      <button id="prevMonth" aria-label="前の月">‹</button>
+      <div class="cal-month" id="monthLabel">2026年8月</div>
+      <button id="nextMonth" aria-label="次の月">›</button>
+    </div>
+
+    <div class="weekday-row">
+      <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
+    </div>
+
+    <div class="day-grid" id="dayGrid"></div>
+
+    <div class="legend">
+      <span><i class="i-avail"></i>予約可能</span>
+      <span><i class="i-closed"></i>休診日</span>
+    </div>
+  </section>
+
+  <section class="form-section hidden" id="counselingSection">
+    <div class="change-menu" id="changeMenuBtnCounseling">‹ メニューを変更する</div>
+    <div class="form-title">カウンセリングのご希望日時</div>
+    <div class="form-sub">第3希望まで入力してください。営業時間外のご希望も承れます。</div>
+
+    <label class="form-label" for="pref1">第1希望日時</label>
+    <input type="datetime-local" id="pref1" class="form-input">
+
+    <label class="form-label" for="pref2">第2希望日時</label>
+    <input type="datetime-local" id="pref2" class="form-input">
+
+    <label class="form-label" for="pref3">第3希望日時</label>
+    <input type="datetime-local" id="pref3" class="form-input">
+
+    <label class="form-label" for="prefContent">相談内容</label>
+    <textarea id="prefContent" class="form-textarea" rows="3" placeholder="相談したい内容をご記入ください"></textarea>
+    <div class="form-error" id="counselingError">第1希望日時を入力してください</div>
+
+    <button class="submit-btn" id="counselingSubmit">LINEで送信する</button>
+    <div class="form-note">ご希望日時を受け付けました。こちらからの返信をもって日程確定となります。</div>
+  </section>
+
+  <section class="retouch-section hidden" id="retouchSection">
+    <div class="change-menu" id="changeMenuBtnRetouch">‹ メニューを変更する</div>
+    <div class="retouch-card">
+      <p>リタッチをご希望の場合は、現在の状態を確認させていただく必要がございます。LINEで「リタッチ希望」とお送りください。確認後、予約可能な日時をご案内いたします。</p>
+      <button class="submit-btn" id="retouchSubmit">LINEで「リタッチ希望」と送る</button>
+    </div>
+  </section>
+
+  <div class="detail" id="detail">
+    <div class="detail-date" id="detailDate"></div>
+    <div class="detail-sub">ご希望の時間帯をタップするとLINEで申込メッセージを作成します</div>
+    <div class="slot-grid" id="slotGrid"></div>
+    <div class="cta-note">タップすると<b>公式LINE</b>が開き、申込メッセージが自動入力されます</div>
+  </div>
+
+  <div class="status-msg" id="statusMsg" style="display:none;"></div>
+
+  <footer>
+    ともこ皮フクリニック｜千葉県佐倉市染井野5丁目30－1<br>
+    ご予約・ご相談はすべて公式LINEより承っております
+  </footer>
+
+</div>
+
+<script>
+/* =========================================================
+   設定エリア（このブロックだけ編集すればOKです）
+   ========================================================= */
+const CONFIG = {
+  SHEET_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTBt6r8aBTRN9eM3h91ICWUZlE6k4YY3283YwUrYqQPVfnpG2Gforo7WxvSkRijtGxLH7PaIBJIt8Gn/pub?gid=1560616839&single=true&output=csv",
+
+  LINE_OA_ID: "@250ezkpj",
+
+  CLINIC_NAME: "ともこ皮フクリニック",
+
+  MENUS: [
+    { id: "eyebrow_first", label: "眉アートメイク 初回", type: "calendar", minutes: 120 },
+    { id: "eyebrow_repeat", label: "眉アートメイク 2回目", type: "calendar", minutes: 60 },
+    { id: "eyeline_first", label: "アイライン 初回", type: "calendar", minutes: 60 },
+    { id: "eyeline_repeat", label: "アイライン 2回目", type: "calendar", minutes: 30 },
+    { id: "scalp_shimi_sm", label: "頭皮・傷消し・シミ消し S／M", type: "calendar", minutes: 60 },
+    { id: "scalp_shimi_l", label: "頭皮・傷消し・シミ消し L", type: "calendar", minutes: 90 },
+    { id: "counseling", label: "カウンセリング", type: "counseling" },
+    { id: "retouch", label: "リタッチ相談", type: "retouch" }
+  ],
+
+  ALLOW_LONGER_SLOTS: true,
+
+  WEEKLY_HOURS_DISPLAY: [
+    { label: "月・水・金", time: "10:00〜13:45" },
+    { label: "火曜日", time: "10:00〜12:45 / 14:00〜17:45" },
+    { label: "土曜日", time: "10:00〜12:45" }
+  ],
+
+  CLOSED_WEEKDAYS: [0, 4],
+
+  CLOSED_FIRST_SATURDAY: true,
+
+  HOLIDAY_API_URL: "https://holidays-jp.github.io/api/v1/date.json",
+
+  FALLBACK_HOLIDAYS: []
+};
+
+/* =========================================================
+   ここから下は基本的に編集不要です
+   ========================================================= */
+
+let slotsByDate = {};   // { "2026-08-10": [{start,end,status}] }
+let holidaySet = new Set();
+let viewYear, viewMonth; // viewMonth: 0-11
+let selectedDateStr = null;
+let selectedMenu = null;
+
+const dayGrid = document.getElementById('dayGrid');
+const monthLabel = document.getElementById('monthLabel');
+const detail = document.getElementById('detail');
+const detailDate = document.getElementById('detailDate');
+const slotGrid = document.getElementById('slotGrid');
+const statusMsg = document.getElementById('statusMsg');
+const menuSection = document.getElementById('menuSection');
+const calSection = document.getElementById('calSection');
+const counselingSection = document.getElementById('counselingSection');
+const retouchSection = document.getElementById('retouchSection');
+const menuList = document.getElementById('menuList');
+const selectedMenuChip = document.getElementById('selectedMenuChip');
+
+function timeToMinutes(t){
+  const [h,m] = t.split(":").map(Number);
+  return h*60 + (m||0);
+}
+function slotDurationMinutes(slot){
+  if(!slot.end) return null;
+  return timeToMinutes(slot.end) - timeToMinutes(slot.start);
+}
+function slotFitsMenu(slot){
+  if(!selectedMenu) return true;
+  const dur = slotDurationMinutes(slot);
+  if(dur === null) return true; // 終了時刻未入力の枠は常に対象とする
+  return CONFIG.ALLOW_LONGER_SLOTS ? dur >= selectedMenu.minutes : dur === selectedMenu.minutes;
+}
+
+function formatMinutes(m){
+  if(m >= 60) return `約${Math.floor(m/60)}時間${m%60 ? (m%60)+'分' : ''}`;
+  return `約${m}分`;
+}
+
+function renderMenuList(){
+  menuList.innerHTML = CONFIG.MENUS.map(m => {
+    const rightLabel = m.type === "calendar" ? formatMinutes(m.minutes)
+      : m.type === "counseling" ? "日時を相談"
+      : "要確認";
+    return `
+      <div class="menu-card" data-id="${m.id}">
+        <span class="m-label">${m.label}</span>
+        <span class="m-time">${rightLabel}</span>
+      </div>
+    `;
+  }).join('');
+  menuList.querySelectorAll('.menu-card').forEach(card => {
+    card.addEventListener('click', () => {
+      selectedMenu = CONFIG.MENUS.find(m => m.id === card.dataset.id);
+      menuSection.classList.add('hidden');
+      if(selectedMenu.type === "calendar"){
+        selectedMenuChip.textContent = selectedMenu.label;
+        calSection.classList.remove('hidden');
+        selectedDateStr = null;
+        detail.classList.remove('show');
+        renderCalendar();
+      } else if(selectedMenu.type === "counseling"){
+        counselingSection.classList.remove('hidden');
+      } else if(selectedMenu.type === "retouch"){
+        retouchSection.classList.remove('hidden');
+      }
+    });
+  });
+}
+
+function backToMenu(){
+  selectedMenu = null;
+  calSection.classList.add('hidden');
+  counselingSection.classList.add('hidden');
+  retouchSection.classList.add('hidden');
+  detail.classList.remove('show');
+  menuSection.classList.remove('hidden');
+}
+
+document.getElementById('changeMenuBtn').addEventListener('click', backToMenu);
+document.getElementById('changeMenuBtnCounseling').addEventListener('click', backToMenu);
+document.getElementById('changeMenuBtnRetouch').addEventListener('click', backToMenu);
+
+/* ---- カウンセリング希望日時フォーム ---- */
+function formatDateTimeJP(v){
+  if(!v) return "";
+  const d = new Date(v);
+  const wd = ["日","月","火","水","木","金","土"][d.getDay()];
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${wd}）${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+document.getElementById('counselingSubmit').addEventListener('click', () => {
+  const p1 = document.getElementById('pref1').value;
+  const p2 = document.getElementById('pref2').value;
+  const p3 = document.getElementById('pref3').value;
+  const content = document.getElementById('prefContent').value.trim();
+  const errorEl = document.getElementById('counselingError');
+
+  if(!p1){
+    errorEl.classList.add('show');
+    return;
+  }
+  errorEl.classList.remove('show');
+
+  let msg = `【カウンセリング希望】\n${CONFIG.CLINIC_NAME}\n第1希望：${formatDateTimeJP(p1)}\n`;
+  if(p2) msg += `第2希望：${formatDateTimeJP(p2)}\n`;
+  if(p3) msg += `第3希望：${formatDateTimeJP(p3)}\n`;
+  msg += `相談内容：${content || "（未記入）"}`;
+
+  const url = `https://line.me/R/oaMessage/${encodeURIComponent(CONFIG.LINE_OA_ID)}/?${encodeURIComponent(msg)}`;
+  window.location.href = url;
+});
+
+/* ---- リタッチ相談 ---- */
+document.getElementById('retouchSubmit').addEventListener('click', () => {
+  const url = `https://line.me/R/oaMessage/${encodeURIComponent(CONFIG.LINE_OA_ID)}/?${encodeURIComponent("リタッチ希望")}`;
+  window.location.href = url;
+});
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function toDateStr(y,m,d){ return `${y}-${pad(m+1)}-${pad(d)}`; }
+function todayStr(){ const t=new Date(); return toDateStr(t.getFullYear(), t.getMonth(), t.getDate()); }
+
+function isFirstSaturday(y,m,d){
+  if (new Date(y,m,d).getDay() !== 6) return false;
+  return d <= 7;
+}
+
+function isClosedDate(y,m,d){
+  const wd = new Date(y,m,d).getDay();
+  const ds = toDateStr(y,m,d);
+  if (CONFIG.CLOSED_WEEKDAYS.includes(wd)) return true;
+  if (CONFIG.CLOSED_FIRST_SATURDAY && isFirstSaturday(y,m,d)) return true;
+  if (holidaySet.has(ds)) return true;
+  return false;
+}
+
+function renderHoursTable(){
+  const el = document.getElementById('hoursTable');
+  el.innerHTML = CONFIG.WEEKLY_HOURS_DISPLAY.map(r => `
+    <div class="hours-row"><span class="d">${r.label}</span><span class="t">${r.time}</span></div>
+  `).join('');
+}
+
+/* ---- CSV読み込み ---- */
+async function loadSheet(){
+  try{
+    const res = await fetch(CONFIG.SHEET_CSV_URL, { cache: "no-store" });
+    if(!res.ok) throw new Error("sheet fetch failed");
+    const text = await res.text();
+    parseCSV(text);
+  }catch(e){
+    console.warn("スプレッドシートの読み込みに失敗しました。SHEET_CSV_URLを確認してください。", e);
+    statusMsg.style.display = 'block';
+    statusMsg.textContent = "空き枠情報の取得に失敗しました。時間をおいて再度お試しください。";
+  }
+}
+
+function parseCSV(text){
+  const lines = text.replace(/\r/g,"").split("\n").filter(l => l.trim().length > 0);
+  slotsByDate = {};
+  // 1行目はヘッダー想定: 日付,開始時刻,終了時刻,状態
+  for(let i=1;i<lines.length;i++){
+    const cols = lines[i].split(",").map(c => c.trim().replace(/^"|"$/g,""));
+    const [date, start, end, status] = cols;
+    if(!date || !start) continue;
+    if(!slotsByDate[date]) slotsByDate[date] = [];
+    slotsByDate[date].push({ start, end: end || "", status: status || "空き" });
+  }
+}
+
+/* ---- 祝日取得 ---- */
+async function loadHolidays(){
+  holidaySet = new Set(CONFIG.FALLBACK_HOLIDAYS);
+  if(!CONFIG.HOLIDAY_API_URL) return;
+  try{
+    const res = await fetch(CONFIG.HOLIDAY_API_URL);
+    if(!res.ok) throw new Error("holiday fetch failed");
+    const data = await res.json();
+    Object.keys(data).forEach(d => holidaySet.add(d));
+  }catch(e){
+    console.warn("祝日情報の取得に失敗しました。FALLBACK_HOLIDAYSのみで判定します。", e);
+  }
+}
+
+/* ---- カレンダー描画 ---- */
+function renderCalendar(){
+  monthLabel.textContent = `${viewYear}年${viewMonth+1}月`;
+  dayGrid.innerHTML = "";
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+  const today = todayStr();
+
+  for(let i=0;i<firstDay;i++){
+    const empty = document.createElement('div');
+    empty.className = "day-cell empty";
+    dayGrid.appendChild(empty);
+  }
+
+  for(let d=1; d<=daysInMonth; d++){
+    const ds = toDateStr(viewYear, viewMonth, d);
+    const cell = document.createElement('div');
+    cell.className = "day-cell";
+
+    const isPast = ds < today;
+    const closed = isClosedDate(viewYear, viewMonth, d);
+    const slots = slotsByDate[ds] || [];
+    const hasAvailable = slots.some(s => s.status === "空き" && slotFitsMenu(s));
+
+    const numEl = document.createElement('div');
+    numEl.className = "num";
+    numEl.textContent = d;
+    cell.appendChild(numEl);
+
+    if(ds === today) cell.classList.add('today');
+
+    if(closed){
+      cell.classList.add('closed');
+      const lbl = document.createElement('div');
+      lbl.className = "closed-label";
+      lbl.textContent = "休診";
+      cell.appendChild(lbl);
+    } else if(isPast){
+      cell.classList.add('past');
+    } else {
+      if(hasAvailable){
+        cell.classList.add('available');
+        const dot = document.createElement('div');
+        dot.className = "dot";
+        cell.appendChild(dot);
+        cell.addEventListener('click', () => selectDate(ds, cell));
+      } else {
+        cell.classList.add('past');
+      }
+    }
+
+    if(ds === selectedDateStr && !closed) cell.classList.add('selected');
+
+    dayGrid.appendChild(cell);
+  }
+}
+
+function formatDateJP(ds){
+  const [y,m,d] = ds.split("-").map(Number);
+  const wd = ["日","月","火","水","木","金","土"][new Date(y,m-1,d).getDay()];
+  return `${y}年${m}月${d}日（${wd}）`;
+}
+
+function selectDate(ds, cellEl){
+  selectedDateStr = ds;
+  document.querySelectorAll('.day-cell.selected').forEach(el => el.classList.remove('selected'));
+  if(cellEl) cellEl.classList.add('selected');
+
+  detailDate.textContent = formatDateJP(ds);
+  const slots = (slotsByDate[ds] || [])
+    .filter(s => slotFitsMenu(s))
+    .slice()
+    .sort((a,b) => a.start.localeCompare(b.start));
+
+  slotGrid.innerHTML = "";
+  const available = slots.filter(s => s.status === "空き");
+
+  if(available.length === 0){
+    slotGrid.innerHTML = `<div class="empty-msg" style="grid-column:1/-1;">この日の空き枠はありません</div>`;
+  } else {
+    slots.forEach(s => {
+      const btn = document.createElement('div');
+      const taken = s.status !== "空き";
+      btn.className = "slot-btn" + (taken ? " taken" : "");
+      btn.textContent = s.end ? `${s.start}〜${s.end}` : s.start;
+      if(!taken){
+        btn.addEventListener('click', () => bookSlot(ds, s));
+      }
+      slotGrid.appendChild(btn);
+    });
+  }
+
+  detail.classList.add('show');
+  detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function bookSlot(ds, slot){
+  const label = formatDateJP(ds);
+  const timeLabel = slot.end ? `${slot.start}〜${slot.end}` : slot.start;
+  const menuLine = selectedMenu ? `希望メニュー：${selectedMenu.label}\n` : "";
+  const message = `【予約希望】\n${CONFIG.CLINIC_NAME}\n${menuLine}${label} ${timeLabel} の枠で予約を希望します。`;
+  const url = `https://line.me/R/oaMessage/${encodeURIComponent(CONFIG.LINE_OA_ID)}/?${encodeURIComponent(message)}`;
+  window.location.href = url;
+}
+
+/* ---- ナビゲーション ---- */
+document.getElementById('prevMonth').addEventListener('click', () => {
+  viewMonth--; if(viewMonth < 0){ viewMonth = 11; viewYear--; }
+  selectedDateStr = null;
+  detail.classList.remove('show');
+  renderCalendar();
+});
+document.getElementById('nextMonth').addEventListener('click', () => {
+  viewMonth++; if(viewMonth > 11){ viewMonth = 0; viewYear++; }
+  selectedDateStr = null;
+  detail.classList.remove('show');
+  renderCalendar();
+});
+
+/* ---- 初期化 ---- */
+(async function init(){
+  const t = new Date();
+  viewYear = t.getFullYear();
+  viewMonth = t.getMonth();
+  renderHoursTable();
+  renderMenuList();
+  renderCalendar();
+  await Promise.all([loadSheet(), loadHolidays()]);
+  renderCalendar();
+})();
+</script>
+</body>
+</html>
