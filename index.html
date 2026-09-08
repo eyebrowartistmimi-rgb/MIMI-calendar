@@ -456,6 +456,19 @@
   }
   .slot-btn.taken:hover { transform: none; background: var(--closed); }
 
+  .slot-btn.picked {
+    background: var(--rose);
+    border-color: var(--rose);
+    color: #fff;
+  }
+  .slot-btn.picked:hover { background: var(--rose-deep); }
+
+  .customer-info {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed rgba(156,136,128,0.3);
+  }
+
   .empty-msg {
     text-align: center;
     color: var(--ink-muted);
@@ -540,6 +553,12 @@
     <div class="form-title">カウンセリングのご希望日時</div>
     <div class="form-sub">第3希望まで入力してください。営業時間外のご希望も承れます。</div>
 
+    <label class="form-label" for="counselName">お名前</label>
+    <input type="text" id="counselName" class="form-input" placeholder="山田 花子">
+
+    <label class="form-label" for="counselPhone">電話番号</label>
+    <input type="tel" id="counselPhone" class="form-input" placeholder="090-1234-5678">
+
     <label class="form-label" for="pref1">第1希望日時</label>
     <input type="datetime-local" id="pref1" class="form-input">
 
@@ -551,7 +570,7 @@
 
     <label class="form-label" for="prefContent">相談内容</label>
     <textarea id="prefContent" class="form-textarea" rows="3" placeholder="相談したい内容をご記入ください"></textarea>
-    <div class="form-error" id="counselingError">第1希望日時を入力してください</div>
+    <div class="form-error" id="counselingError">お名前・電話番号・第1希望日時をご入力ください</div>
 
     <button class="submit-btn" id="counselingSubmit">LINEで送信する</button>
     <div class="form-note">ご希望日時を受け付けました。こちらからの返信をもって日程確定となります。</div>
@@ -561,15 +580,30 @@
     <div class="change-menu" id="changeMenuBtnRetouch">‹ メニューを変更する</div>
     <div class="retouch-card">
       <p>リタッチをご希望の場合は、現在の状態を確認させていただく必要がございます。LINEで「リタッチ希望」とお送りください。確認後、予約可能な日時をご案内いたします。</p>
+      <label class="form-label" for="retouchName">お名前</label>
+      <input type="text" id="retouchName" class="form-input" placeholder="山田 花子">
+      <label class="form-label" for="retouchPhone">電話番号</label>
+      <input type="tel" id="retouchPhone" class="form-input" placeholder="090-1234-5678">
+      <div class="form-error" id="retouchError">お名前と電話番号をご入力ください</div>
       <button class="submit-btn" id="retouchSubmit">LINEで「リタッチ希望」と送る</button>
     </div>
   </section>
 
   <div class="detail" id="detail">
     <div class="detail-date" id="detailDate"></div>
-    <div class="detail-sub">ご希望の時間帯をタップするとLINEで申込メッセージを作成します</div>
+    <div class="detail-sub">ご希望の時間帯をタップして選択してください</div>
     <div class="slot-grid" id="slotGrid"></div>
-    <div class="cta-note">タップすると<b>公式LINE</b>が開き、申込メッセージが自動入力されます</div>
+
+    <div class="customer-info hidden" id="calCustomerInfo">
+      <label class="form-label" for="calName">お名前</label>
+      <input type="text" id="calName" class="form-input" placeholder="山田 花子">
+      <label class="form-label" for="calPhone">電話番号</label>
+      <input type="tel" id="calPhone" class="form-input" placeholder="090-1234-5678">
+      <div class="form-error" id="calError">お名前と電話番号をご入力ください</div>
+      <button class="submit-btn" id="calSubmit">LINEで申し込む</button>
+    </div>
+
+    <div class="cta-note">送信すると<b>公式LINE</b>が開き、申込メッセージが自動入力されます</div>
   </div>
 
   <div class="status-msg" id="statusMsg" style="display:none;"></div>
@@ -586,37 +620,49 @@
    設定エリア（このブロックだけ編集すればOKです）
    ========================================================= */
 const CONFIG = {
-  SHEET_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTBt6r8aBTRN9eM3h91ICWUZlE6k4YY3283YwUrYqQPVfnpG2Gforo7WxvSkRijtGxLH7PaIBJIt8Gn/pub?gid=1560616839&single=true&output=csv",
+  // Googleスプレッドシートを「ウェブに公開」→ CSV形式で発行したURLを貼り付け
+  SHEET_CSV_URL: "https://docs.google.com/spreadsheets/d/e/PUT_YOUR_PUBLISHED_ID_HERE/pub?output=csv",
 
-  LINE_OA_ID: "@250ezkpj",
+  // 公式LINEのID（@から始まるID）。例: "@123abcde"
+  LINE_OA_ID: "@tomoko-skin",
 
   CLINIC_NAME: "ともこ皮フクリニック",
 
+  // 施術メニューと所要時間（分）。お客様はここから選び、選んだ時間に収まる枠だけが表示されます。
+  // type: "calendar"=通常の空き枠カレンダー／"counseling"=希望日時を第3希望まで入力するフォーム／"retouch"=カレンダーを出さずLINE誘導のみ
+  // ラベルや分数は自由に編集・追加・削除してください。
   MENUS: [
-    { id: "eyebrow_first", label: "眉アートメイク 初回", type: "calendar", minutes: 120 },
-    { id: "eyebrow_repeat", label: "眉アートメイク 2回目", type: "calendar", minutes: 60 },
-    { id: "eyeline_first", label: "アイライン 初回", type: "calendar", minutes: 60 },
-    { id: "eyeline_repeat", label: "アイライン 2回目", type: "calendar", minutes: 30 },
-    { id: "scalp_shimi_sm", label: "頭皮・傷消し・シミ消し S／M", type: "calendar", minutes: 60 },
-    { id: "scalp_shimi_l", label: "頭皮・傷消し・シミ消し L", type: "calendar", minutes: 90 },
-    { id: "counseling", label: "カウンセリング", type: "counseling" },
-    { id: "retouch", label: "リタッチ相談", type: "retouch" }
+    { id: "eyebrow_first",  label: "眉アートメイク 初回",   type: "calendar", minutes: 120 },
+    { id: "eyebrow_repeat", label: "眉アートメイク 2回目",  type: "calendar", minutes: 60 },
+    { id: "eyeline_first",  label: "アイライン 初回",       type: "calendar", minutes: 60 },
+    { id: "eyeline_repeat", label: "アイライン 2回目",      type: "calendar", minutes: 30 },
+    { id: "scalp_shimi_sm", label: "頭皮・シミ消し S／M",   type: "calendar", minutes: 60 },
+    { id: "scalp_shimi_l",  label: "頭皮・シミ消し L",      type: "calendar", minutes: 90 },
+    { id: "counseling",     label: "カウンセリング",        type: "counseling" },
+    { id: "retouch",        label: "リタッチ相談",          type: "retouch" }
   ],
 
+  // 枠の所要時間が選んだメニューの分数以上あれば表示する（true推奨）。
+  // falseにすると、メニューの分数とぴったり同じ長さの枠しか表示しません。
   ALLOW_LONGER_SLOTS: true,
 
+  // 曜日ごとの診療時間表示（0=日 ... 6=土）。nullは休診扱いの表示用
   WEEKLY_HOURS_DISPLAY: [
     { label: "月・水・金", time: "10:00〜13:45" },
     { label: "火曜日", time: "10:00〜12:45 / 14:00〜17:45" },
     { label: "土曜日", time: "10:00〜12:45" }
   ],
 
+  // 定休：曜日番号 (0=日, 4=木)
   CLOSED_WEEKDAYS: [0, 4],
 
+  // 第1土曜日を定休にするか
   CLOSED_FIRST_SATURDAY: true,
 
+  // 祝日API（休診扱いにする）。使わない場合は空配列のままでOK、下のFALLBACK_HOLIDAYSが使われます
   HOLIDAY_API_URL: "https://holidays-jp.github.io/api/v1/date.json",
 
+  // 祝日APIが取得できない場合の手動リスト（YYYY-MM-DD）。必要に応じて追記してください
   FALLBACK_HOLIDAYS: []
 };
 
@@ -629,12 +675,14 @@ let holidaySet = new Set();
 let viewYear, viewMonth; // viewMonth: 0-11
 let selectedDateStr = null;
 let selectedMenu = null;
+let selectedSlot = null;
 
 const dayGrid = document.getElementById('dayGrid');
 const monthLabel = document.getElementById('monthLabel');
 const detail = document.getElementById('detail');
 const detailDate = document.getElementById('detailDate');
 const slotGrid = document.getElementById('slotGrid');
+const calCustomerInfo = document.getElementById('calCustomerInfo');
 const statusMsg = document.getElementById('statusMsg');
 const menuSection = document.getElementById('menuSection');
 const calSection = document.getElementById('calSection');
@@ -716,19 +764,21 @@ function formatDateTimeJP(v){
 }
 
 document.getElementById('counselingSubmit').addEventListener('click', () => {
+  const name = document.getElementById('counselName').value.trim();
+  const phone = document.getElementById('counselPhone').value.trim();
   const p1 = document.getElementById('pref1').value;
   const p2 = document.getElementById('pref2').value;
   const p3 = document.getElementById('pref3').value;
   const content = document.getElementById('prefContent').value.trim();
   const errorEl = document.getElementById('counselingError');
 
-  if(!p1){
+  if(!name || !phone || !p1){
     errorEl.classList.add('show');
     return;
   }
   errorEl.classList.remove('show');
 
-  let msg = `【カウンセリング希望】\n${CONFIG.CLINIC_NAME}\n第1希望：${formatDateTimeJP(p1)}\n`;
+  let msg = `【カウンセリング希望】\n${CONFIG.CLINIC_NAME}\nお名前：${name}\n電話番号：${phone}\n第1希望：${formatDateTimeJP(p1)}\n`;
   if(p2) msg += `第2希望：${formatDateTimeJP(p2)}\n`;
   if(p3) msg += `第3希望：${formatDateTimeJP(p3)}\n`;
   msg += `相談内容：${content || "（未記入）"}`;
@@ -739,7 +789,18 @@ document.getElementById('counselingSubmit').addEventListener('click', () => {
 
 /* ---- リタッチ相談 ---- */
 document.getElementById('retouchSubmit').addEventListener('click', () => {
-  const url = `https://line.me/R/oaMessage/${encodeURIComponent(CONFIG.LINE_OA_ID)}/?${encodeURIComponent("リタッチ希望")}`;
+  const name = document.getElementById('retouchName').value.trim();
+  const phone = document.getElementById('retouchPhone').value.trim();
+  const errorEl = document.getElementById('retouchError');
+
+  if(!name || !phone){
+    errorEl.classList.add('show');
+    return;
+  }
+  errorEl.classList.remove('show');
+
+  const msg = `リタッチ希望\nお名前：${name}\n電話番号：${phone}`;
+  const url = `https://line.me/R/oaMessage/${encodeURIComponent(CONFIG.LINE_OA_ID)}/?${encodeURIComponent(msg)}`;
   window.location.href = url;
 });
 
@@ -875,6 +936,7 @@ function formatDateJP(ds){
 
 function selectDate(ds, cellEl){
   selectedDateStr = ds;
+  selectedSlot = null;
   document.querySelectorAll('.day-cell.selected').forEach(el => el.classList.remove('selected'));
   if(cellEl) cellEl.classList.add('selected');
 
@@ -885,6 +947,7 @@ function selectDate(ds, cellEl){
     .sort((a,b) => a.start.localeCompare(b.start));
 
   slotGrid.innerHTML = "";
+  calCustomerInfo.classList.add('hidden');
   const available = slots.filter(s => s.status === "空き");
 
   if(available.length === 0){
@@ -896,7 +959,13 @@ function selectDate(ds, cellEl){
       btn.className = "slot-btn" + (taken ? " taken" : "");
       btn.textContent = s.end ? `${s.start}〜${s.end}` : s.start;
       if(!taken){
-        btn.addEventListener('click', () => bookSlot(ds, s));
+        btn.addEventListener('click', () => {
+          selectedSlot = s;
+          document.querySelectorAll('.slot-btn.picked').forEach(el => el.classList.remove('picked'));
+          btn.classList.add('picked');
+          calCustomerInfo.classList.remove('hidden');
+          calCustomerInfo.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
       }
       slotGrid.appendChild(btn);
     });
@@ -906,14 +975,24 @@ function selectDate(ds, cellEl){
   detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function bookSlot(ds, slot){
-  const label = formatDateJP(ds);
-  const timeLabel = slot.end ? `${slot.start}〜${slot.end}` : slot.start;
+document.getElementById('calSubmit').addEventListener('click', () => {
+  const name = document.getElementById('calName').value.trim();
+  const phone = document.getElementById('calPhone').value.trim();
+  const errorEl = document.getElementById('calError');
+
+  if(!name || !phone || !selectedSlot){
+    errorEl.classList.add('show');
+    return;
+  }
+  errorEl.classList.remove('show');
+
+  const label = formatDateJP(selectedDateStr);
+  const timeLabel = selectedSlot.end ? `${selectedSlot.start}〜${selectedSlot.end}` : selectedSlot.start;
   const menuLine = selectedMenu ? `希望メニュー：${selectedMenu.label}\n` : "";
-  const message = `【予約希望】\n${CONFIG.CLINIC_NAME}\n${menuLine}${label} ${timeLabel} の枠で予約を希望します。`;
+  const message = `【予約希望】\n${CONFIG.CLINIC_NAME}\n${menuLine}${label} ${timeLabel} の枠で予約を希望します。\nお名前：${name}\n電話番号：${phone}`;
   const url = `https://line.me/R/oaMessage/${encodeURIComponent(CONFIG.LINE_OA_ID)}/?${encodeURIComponent(message)}`;
   window.location.href = url;
-}
+});
 
 /* ---- ナビゲーション ---- */
 document.getElementById('prevMonth').addEventListener('click', () => {
