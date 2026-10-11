@@ -624,7 +624,7 @@ const CONFIG = {
   SHEET_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTBt6r8aBTRN9eM3h91ICWUZlE6k4YY3283YwUrYqQPVfnpG2Gforo7WxvSkRijtGxLH7PaIBJIt8Gn/pub?gid=1560616839&single=true&output=csv",
 
   // 公式LINEのID（@から始まるID）。例: "@123abcde"
-  LINE_OA_ID: "@tomoko-skin",
+  LINE_OA_ID: "@250ezkpj",
 
   CLINIC_NAME: "ともこ皮フクリニック",
 
@@ -783,7 +783,7 @@ document.getElementById('counselingSubmit').addEventListener('click', () => {
   if(p3) msg += `第3希望：${formatDateTimeJP(p3)}\n`;
   msg += `相談内容：${content || "（未記入）"}`;
 
-  const url = `https://line.me/R/oaMessage/${encodeURIComponent(CONFIG.LINE_OA_ID)}/?${encodeURIComponent(msg)}`;
+  const url = `https://line.me/R/oaMessage/${CONFIG.LINE_OA_ID}/?${encodeURIComponent(msg)}`;
   window.location.href = url;
 });
 
@@ -800,7 +800,7 @@ document.getElementById('retouchSubmit').addEventListener('click', () => {
   errorEl.classList.remove('show');
 
   const msg = `リタッチ希望\nお名前：${name}\n電話番号：${phone}`;
-  const url = `https://line.me/R/oaMessage/${encodeURIComponent(CONFIG.LINE_OA_ID)}/?${encodeURIComponent(msg)}`;
+  const url = `https://line.me/R/oaMessage/${CONFIG.LINE_OA_ID}/?${encodeURIComponent(msg)}`;
   window.location.href = url;
 });
 
@@ -990,7 +990,7 @@ document.getElementById('calSubmit').addEventListener('click', () => {
   const timeLabel = selectedSlot.end ? `${selectedSlot.start}〜${selectedSlot.end}` : selectedSlot.start;
   const menuLine = selectedMenu ? `希望メニュー：${selectedMenu.label}\n` : "";
   const message = `【予約希望】\n${CONFIG.CLINIC_NAME}\n${menuLine}${label} ${timeLabel} の枠で予約を希望します。\nお名前：${name}\n電話番号：${phone}`;
-  const url = `https://line.me/R/oaMessage/${encodeURIComponent(CONFIG.LINE_OA_ID)}/?${encodeURIComponent(message)}`;
+  const url = `https://line.me/R/oaMessage/${CONFIG.LINE_OA_ID}/?${encodeURIComponent(message)}`;
   window.location.href = url;
 });
 
