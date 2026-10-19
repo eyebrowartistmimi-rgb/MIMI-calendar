@@ -513,11 +513,11 @@
     <div class="sub">医療 × 美容アートメイク｜空き枠カレンダー</div>
 
     <div class="hours-card">
-      <div class="hours-title">診療時間</div>
-      <div id="hoursTable"></div>
+      <div class="hours-title">営業日</div>
+      <div class="hours-row"><span class="d">営業日</span><span class="t">不定休</span></div>
       <div class="hours-note">
-        休診：木曜日・日曜日・第1土曜日・祝日<br>
-        ※完全予約制です。ご希望の枠をタップし、LINEからお申し込みください。
+        ※完全予約制です。カレンダーに表示されている日が予約可能日です。<br>
+        ご希望の枠をタップし、LINEからお申し込みください。
       </div>
     </div>
   </header>
@@ -544,14 +544,14 @@
 
     <div class="legend">
       <span><i class="i-avail"></i>予約可能</span>
-      <span><i class="i-closed"></i>休診日</span>
+      <span><i class="i-closed"></i>受付なし</span>
     </div>
   </section>
 
   <section class="form-section hidden" id="counselingSection">
     <div class="change-menu" id="changeMenuBtnCounseling">‹ メニューを変更する</div>
     <div class="form-title">カウンセリングのご希望日時</div>
-    <div class="form-sub">第3希望まで入力してください。営業時間外のご希望も承れます。</div>
+    <div class="form-sub">第3希望まで入力してください。</div>
 
     <label class="form-label" for="counselName">お名前</label>
     <input type="text" id="counselName" class="form-input" placeholder="山田 花子">
@@ -646,23 +646,11 @@ const CONFIG = {
   // falseにすると、メニューの分数とぴったり同じ長さの枠しか表示しません。
   ALLOW_LONGER_SLOTS: true,
 
-  // 曜日ごとの診療時間表示（0=日 ... 6=土）。nullは休診扱いの表示用
-  WEEKLY_HOURS_DISPLAY: [
-    { label: "月・水・金", time: "10:00〜13:45" },
-    { label: "火曜日", time: "10:00〜12:45 / 14:00〜17:45" },
-    { label: "土曜日", time: "10:00〜12:45" }
-  ],
-
-  // 定休：曜日番号 (0=日, 4=木)
-  CLOSED_WEEKDAYS: [0, 4],
-
-  // 第1土曜日を定休にするか
-  CLOSED_FIRST_SATURDAY: true,
-
-  // 祝日API（休診扱いにする）。使わない場合は空配列のままでOK、下のFALLBACK_HOLIDAYSが使われます
-  HOLIDAY_API_URL: "https://holidays-jp.github.io/api/v1/date.json",
-
-  // 祝日APIが取得できない場合の手動リスト（YYYY-MM-DD）。必要に応じて追記してください
+  // 不定休運用：定休日・祝日の自動判定は使いません。
+  // スプレッドシートに「空き」の行がある日だけが予約可能日として表示されます。
+  CLOSED_WEEKDAYS: [],          // 例：日曜を定休にする場合は [0]
+  CLOSED_FIRST_SATURDAY: false,
+  HOLIDAY_API_URL: "",          // 祝日を自動で除外したい場合のみAPIのURLを設定
   FALLBACK_HOLIDAYS: []
 };
 
@@ -820,13 +808,6 @@ function isClosedDate(y,m,d){
   if (CONFIG.CLOSED_FIRST_SATURDAY && isFirstSaturday(y,m,d)) return true;
   if (holidaySet.has(ds)) return true;
   return false;
-}
-
-function renderHoursTable(){
-  const el = document.getElementById('hoursTable');
-  el.innerHTML = CONFIG.WEEKLY_HOURS_DISPLAY.map(r => `
-    <div class="hours-row"><span class="d">${r.label}</span><span class="t">${r.time}</span></div>
-  `).join('');
 }
 
 /* ---- CSV読み込み ---- */
@@ -1013,7 +994,6 @@ document.getElementById('nextMonth').addEventListener('click', () => {
   const t = new Date();
   viewYear = t.getFullYear();
   viewMonth = t.getMonth();
-  renderHoursTable();
   renderMenuList();
   renderCalendar();
   await Promise.all([loadSheet(), loadHolidays()]);
