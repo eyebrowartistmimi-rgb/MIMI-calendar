@@ -517,6 +517,7 @@
       <div class="hours-row"><span class="d">営業日</span><span class="t">不定休</span></div>
       <div class="hours-note">
         ※完全予約制です。カレンダーに表示されている日が予約可能日です。<br>
+        ※当日のご予約はお受けできません。前日までにお申し込みください。<br>
         ご希望の枠をタップし、LINEからお申し込みください。
       </div>
     </div>
@@ -646,6 +647,9 @@ const CONFIG = {
   // falseにすると、メニューの分数とぴったり同じ長さの枠しか表示しません。
   ALLOW_LONGER_SLOTS: true,
 
+  // 予約を受け付けるのが「今日から何日後」からか。1＝明日以降（当日予約不可）、2＝明後日以降。
+  MIN_DAYS_AHEAD: 1,
+
   // 不定休運用：定休日・祝日の自動判定は使いません。
   // スプレッドシートに「空き」の行がある日だけが予約可能日として表示されます。
   CLOSED_WEEKDAYS: [],          // 例：日曜を定休にする場合は [0]
@@ -761,6 +765,13 @@ document.getElementById('counselingSubmit').addEventListener('click', () => {
   const errorEl = document.getElementById('counselingError');
 
   if(!name || !phone || !p1){
+    errorEl.textContent = "お名前・電話番号・第1希望日時をご入力ください";
+    errorEl.classList.add('show');
+    return;
+  }
+  const earliest = earliestBookableStr();
+  if([p1,p2,p3].some(v => v && v.slice(0,10) < earliest)){
+    errorEl.textContent = "当日のご予約はお受けできません。翌日以降の日時をご入力ください";
     errorEl.classList.add('show');
     return;
   }
@@ -795,6 +806,13 @@ document.getElementById('retouchSubmit').addEventListener('click', () => {
 function pad(n){ return String(n).padStart(2,'0'); }
 function toDateStr(y,m,d){ return `${y}-${pad(m+1)}-${pad(d)}`; }
 function todayStr(){ const t=new Date(); return toDateStr(t.getFullYear(), t.getMonth(), t.getDate()); }
+
+// 予約を受け付けられる最初の日（YYYY-MM-DD）。当日予約を不可にするため、今日＋MIN_DAYS_AHEAD日。
+function earliestBookableStr(){
+  const t = new Date();
+  t.setDate(t.getDate() + CONFIG.MIN_DAYS_AHEAD);
+  return toDateStr(t.getFullYear(), t.getMonth(), t.getDate());
+}
 
 function isFirstSaturday(y,m,d){
   if (new Date(y,m,d).getDay() !== 6) return false;
@@ -871,7 +889,7 @@ function renderCalendar(){
     const cell = document.createElement('div');
     cell.className = "day-cell";
 
-    const isPast = ds < today;
+    const isPast = ds < earliestBookableStr();   // 当日・過去日は選択不可
     const closed = isClosedDate(viewYear, viewMonth, d);
     const slots = slotsByDate[ds] || [];
     const hasAvailable = slots.some(s => s.status === "空き" && slotFitsMenu(s));
@@ -962,6 +980,12 @@ document.getElementById('calSubmit').addEventListener('click', () => {
   const errorEl = document.getElementById('calError');
 
   if(!name || !phone || !selectedSlot){
+    errorEl.textContent = "お名前と電話番号をご入力ください";
+    errorEl.classList.add('show');
+    return;
+  }
+  if(selectedDateStr < earliestBookableStr()){
+    errorEl.textContent = "当日のご予約はお受けできません。別の日をお選びください";
     errorEl.classList.add('show');
     return;
   }
@@ -995,6 +1019,9 @@ document.getElementById('nextMonth').addEventListener('click', () => {
   viewYear = t.getFullYear();
   viewMonth = t.getMonth();
   renderMenuList();
+  ['pref1','pref2','pref3'].forEach(id => {
+    document.getElementById(id).min = earliestBookableStr() + 'T00:00';
+  });
   renderCalendar();
   await Promise.all([loadSheet(), loadHolidays()]);
   renderCalendar();
